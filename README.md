@@ -1,2 +1,5 @@
-# petka
-Personal bank account analyzer
+# devitka
+Event modeling engine
+
+cmake .
+make
