@@ -1,3 +1,5 @@
 eddas:
         - name: "test"
           filename: "a.yaml"
+        - name: "edison"
+          filename: "b.yaml"

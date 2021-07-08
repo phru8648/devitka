@@ -26,8 +26,17 @@ int config_init(config_t* config) {
 	return config->eddas ? 1 : 0;
 }
 
-int config_delete(config_t* config) {
-	free(config->eddas);
+void config_delete(config_t* config) {
+
+	list_t* it = list_first(config->eddas); 
+	while (!list_eol(config->eddas, it)) {
+
+		edda_t* edda = (edda_t*)list_element(it);
+		edda_delete(edda);
+		it = list_next(it);
+	}
+
+	list_delete(config->eddas);
 }
 
 int context_init(struct context* ctx, FILE* f, config_t* config) {
@@ -117,7 +126,6 @@ int parse_edda(struct context* ctx) {
 
 		if (ctx->event.type == YAML_SCALAR_EVENT) {
 			char* key = ctx->event.data.scalar.value;
-			printf("Key: %s\n", key);
 			if (!strcmp(key, NAME_KEY)) {
 				value_field = &edda->name;
 			} else if (!strcmp(key, FILENAME_KEY)) {
@@ -137,7 +145,6 @@ int parse_edda(struct context* ctx) {
 
 		if (ctx->event.type == YAML_SCALAR_EVENT) {
 			char* value = ctx->event.data.scalar.value;
-			printf("Value: %s\n", value);
 			*value_field = strdup(value);
 			if (*value_field == NULL) {
 				fprintf(stderr, "Unable to allocate memory when parsing config\n");
@@ -153,6 +160,7 @@ int parse_edda(struct context* ctx) {
 		}
 	}
 
+	printf("Adding edda `%s` to config (filename `%s`)\n", edda->name, edda->filename);
 	list_append(ctx->config->eddas, edda);
 
 	return 1;

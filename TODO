@@ -1,0 +1,2 @@
+- check that duplicate edda does not exists when loading config
+- proper logging

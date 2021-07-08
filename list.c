@@ -38,6 +38,8 @@ void list_append(list_t* list, void* element) {
 	x->prev = list->prev;
 	list->prev = x;
 	x->prev->next = x;
+
+	x->element = element;
 }
 
 // return nonzero when this item is eol record

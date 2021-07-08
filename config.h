@@ -9,3 +9,4 @@ typedef struct config {
 } config_t;
 
 config_t* load_config(void);
+void config_delete(config_t* config);
