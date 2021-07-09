@@ -1,0 +1,15 @@
+== devitka
+Event modeling engine
+
+=== Prerequisities for build
+
+* cmake (3.10 or newer)
+* libyaml
+
+
+=== How to build
+
+....
+cmake .
+make
+....
