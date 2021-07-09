@@ -14,6 +14,9 @@ struct item {
 
 list_t* list_alloc(void) {
 	list_t* list = (list_t*)malloc(sizeof(list_t));
+	if (!list) {
+		return NULL;
+	}
 	list->prev = list;
 	list->next = list;
 	return list;

@@ -1,5 +1,5 @@
 eddas:
-        - name: "test"
-          filename: "a.yaml"
         - name: "edison"
+          filename: "a.yaml"
+        - name: "thor"
           filename: "b.yaml"

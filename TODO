@@ -1,2 +1,2 @@
-- check that duplicate edda does not exists when loading config
 - proper logging
+- command line option to specify config file

@@ -10,3 +10,5 @@ typedef struct config {
 
 config_t* load_config(void);
 void config_delete(config_t* config);
+
+edda_t* config_get_edda(config_t* config, char* edda_name);

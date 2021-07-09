@@ -2,6 +2,7 @@
 #include <yaml.h>
 
 #include "config.h"
+#include "list.h"
 
 #define EDDAS_KEY "eddas"
 #define NAME_KEY "name"
@@ -23,7 +24,11 @@ void log_yaml_parser_error(yaml_parser_t* parser) {
 int config_init(config_t* config) {
 
 	config->eddas = list_alloc();
-	return config->eddas ? 1 : 0;
+	if (!config->eddas) {
+		fprintf(stderr, "Cannot allocate list of eddas for config\n");
+		return 0;
+	}
+	return 1;
 }
 
 void config_delete(config_t* config) {
@@ -114,7 +119,7 @@ int parse_edda(struct context* ctx) {
 		return 0;
 	}
 
-	edda_t* edda = (edda_t*)malloc(sizeof(edda_t));
+	edda_t* edda = (edda_t*)calloc(1, sizeof(edda_t));
 	if (!edda) {
 		fprintf(stderr, "Cannot allocate edda\n");
 		return 0;
@@ -128,19 +133,30 @@ int parse_edda(struct context* ctx) {
 			char* key = ctx->event.data.scalar.value;
 			if (!strcmp(key, NAME_KEY)) {
 				value_field = &edda->name;
+				if (edda->name) {
+					fprintf(stderr, "Duplicate occurence of `name` property\n");
+					goto error;
+
+				}
 			} else if (!strcmp(key, FILENAME_KEY)) {
+				if (edda->filename) {
+					fprintf(stderr, "Duplicate occurence of `filename` property\n");
+					goto error;
+
+				}
 				value_field = &edda->filename;
 			} else {
 				fprintf(stderr, "Unexpected edda attribute \"%s\"\n", key);
-				return 0;
+				goto error;
 			}
+
 		} else {
 			fprintf(stderr, "Key expected, but event type %d found\n", ctx->event.type);
-			return 0;
+			goto error;
 		}
 		
 		if (!parse_event(ctx)) {
-			return 0;
+			goto error;
 		}
 
 		if (ctx->event.type == YAML_SCALAR_EVENT) {
@@ -148,22 +164,43 @@ int parse_edda(struct context* ctx) {
 			*value_field = strdup(value);
 			if (*value_field == NULL) {
 				fprintf(stderr, "Unable to allocate memory when parsing config\n");
-				return 0;
+				goto error;
 			}
 		} else {
 			fprintf(stderr, "Value expected, but event type %d found\n", ctx->event.type);
-			return 0;
+			goto error;
 		}
 
 		if (!parse_event(ctx)) {
-			return 0;
+			goto error;
 		}
 	}
+
+	if (!edda->name) {
+		fprintf(stderr, "Edda name not found \n");
+		goto error;
+	}
+
+	if (!edda->filename) {
+		fprintf(stderr, "Edda filename not found for edda \"%s\"\n", edda->name);
+		goto error;
+	}
+
+	edda_t* existing_edda = config_get_edda(ctx->config, edda->name);
+	if (existing_edda) {
+		fprintf(stderr, "Edda name `%s` is declared more than once\n", edda->name);
+		goto error;
+	}
+
 
 	printf("Adding edda `%s` to config (filename `%s`)\n", edda->name, edda->filename);
 	list_append(ctx->config->eddas, edda);
 
 	return 1;
+
+error:
+	edda_delete(edda);
+	return 0;
 }
 
 int parse_eddas(struct context* ctx) {
@@ -305,3 +342,16 @@ config_t* load_config(void) {
 	return config;
 }
 
+edda_t* config_get_edda(config_t* config, char* edda_name) {
+
+	list_t* it = list_first(config->eddas);
+	while (!list_eol(config->eddas, it)) {
+		edda_t* edda = (edda_t*)list_element(it);
+		if (!strcmp(edda->name, edda_name)) {
+			return edda;
+		}
+		it = list_next(it);
+	}
+
+	return NULL;
+}
